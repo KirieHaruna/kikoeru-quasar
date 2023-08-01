@@ -4,7 +4,7 @@
     <q-slide-transition>
       <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right text-white audio-player" @mousewheel.prevent @touchmove.prevent style="background:#111111;">
         <!-- 音声封面 -->
-        <div class="bg-dark row items-center albumart">
+        <div class="bg-dark row items-center " :style="{ 'max-width': '599px', width: '100%', height: computedHeight }">
           <q-img v-if="noPic" contain transition="fade" :src="coverUrl" :ratio="4/3" style="display:none;"/>
           <q-img v-else contain transition="fade" :src="coverUrl" :ratio="4/3" />
           <q-btn dense round size="md" color="white" text-color="dark" icon="keyboard_arrow_down" @click="toggleHide()" class="absolute-top-left q-ma-sm" />
@@ -46,7 +46,7 @@
         </div>
 
         <!-- 进度条控件 -->
-        <div class="row items-center q-mx-sm q-my-sm" style="height: 40px">
+        <div class="row items-center q-mx-sm q-my-sm" :style="{ height: videoMode ? '200px' : '40px' }">
           <div class="col-auto">{{ formatSeconds(currentTime) }}</div>
           <AudioElement class="col" :videoMode="videoMode"/>
           <div class="col-auto">{{ formatSeconds(duration) }}</div>
@@ -168,7 +168,7 @@ export default {
       queueCopy: [],
       hideSeekButton: false,
       swapSeekButton: false,
-      videoMode: false
+      videoMode: JSON.parse(localStorage.getItem('videoModeFlag'))
     }
   },
 
@@ -207,6 +207,10 @@ export default {
   },
 
   computed: {
+
+    computedHeight() {
+      return this.videoMode ? 'calc(100% - 400px)' : 'calc(100% - 230px)';
+    },
 
     coverUrl () {
       // 从 LocalStorage 中读取 token

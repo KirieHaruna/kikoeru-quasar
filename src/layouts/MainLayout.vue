@@ -111,6 +111,24 @@
               </q-item-label>
             </q-item-section>
           </q-item>
+
+          <q-item
+            clickable
+            v-ripple
+            exact
+            active-class="text-deep-purple text-weight-medium"
+            @click="videoMode"
+          >
+            <q-item-section avatar>
+              <q-icon name="ondemand_video" />
+            </q-item-section>
+
+            <q-item-section>
+              <q-item-label class="text-subtitle1">
+                视频模式
+              </q-item-label>
+            </q-item-section>
+          </q-item>
         </q-list>
 
         <q-list>
@@ -253,6 +271,9 @@ export default {
     this.initUser();
     this.checkUpdate();
     this.readSharedConfig();
+    if (localStorage.getItem('videoModeFlag') === null){
+      localStorage.setItem('videoModeFlag', JSON.stringify(false))
+    }
   },
 
   computed: {
@@ -373,6 +394,17 @@ export default {
       } else {
         noPicFlag = !noPicFlag;
         this.$q.localStorage.set('noPicFlag', noPicFlag);
+      }
+      location.reload()
+    },
+
+    videoMode(){
+      let videoModeFlag = JSON.parse(localStorage.getItem('videoModeFlag'))
+      if (videoModeFlag == null) {
+        localStorage.setItem('videoModeFlag', JSON.stringify(true))
+      } else {
+        videoModeFlag = !videoModeFlag;
+        localStorage.setItem('videoModeFlag', JSON.stringify(videoModeFlag))
       }
       location.reload()
     },

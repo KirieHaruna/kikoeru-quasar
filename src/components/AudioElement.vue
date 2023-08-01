@@ -11,9 +11,12 @@
     @pause="onPause()"
     @sourcechange="onSourceChange()"
   >
-    <audio crossorigin="anonymous" >
+    <audio v-if="!videoMode" crossorigin="anonymous">
       <source v-if="source" :src="source" />
     </audio>
+    <video v-else crossorigin="anonymous">
+      <source v-if="source" :src="source" />
+    </video>
   </vue-plyr>
 </template>
 
@@ -32,7 +35,8 @@ export default {
     return {
       lrcObj: null,
       lrcAvailable: false,
-      count: 0
+      count: 0,
+      videoMode: JSON.parse(localStorage.getItem('videoModeFlag'))
     }
   },
 
@@ -41,8 +45,19 @@ export default {
       return this.$refs.plyr.player
     },
 
+    // videoMode() {
+    // const videoModeFlag = localStorage.getItem('videoModeFlag')
+    // console.log(JSON.parse(videoModeFlag))
+    //   if (videoModeFlag !== null) {
+    //     return JSON.parse(videoModeFlag)
+    //   }else{
+    //     return false
+    //   }
+    // },
+
     source () {
       // 从 LocalStorage 中读取 token
+      console.log(this.currentPlayingFile)
       const token = this.$q.localStorage.getItem('jwt-token') || ''
       // New API
       if (this.currentPlayingFile.mediaStreamUrl) {
@@ -128,6 +143,12 @@ export default {
   methods: {
     onSourceChange(event){
       console.log('onPlay' + event)
+      // 销毁 vue-plyr 组件
+      this.$refs.plyr.destroy();
+      // 重新创建 vue-plyr 组件
+      this.$nextTick(() => {
+        this.$refs.plyr.init();
+      });
       this.player.currentTime = this.$store.state.AudioPlayer.startTime;
     },
     /**
@@ -178,6 +199,8 @@ export default {
     onCanplay () {
       // 缓冲至可播放状态时触发 (只有缓冲至可播放状态, 才能获取媒体文件的播放时长)
       this.SET_DURATION(this.player.duration)
+
+      console.log('Playing:', this.videoMode);
 
       // 播放
       if (this.playing && this.player.currentTime !== this.player.duration) {
