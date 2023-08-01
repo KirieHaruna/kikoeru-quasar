@@ -275,6 +275,7 @@ export default {
     initUser () {
       this.$axios.get('/api/auth/me')
         .then((res) => {
+          res.data.user.displayLrcFile = false
           this.$store.commit('User/INIT', res.data.user)
           this.$store.commit('User/SET_AUTH', res.data.auth)
         })

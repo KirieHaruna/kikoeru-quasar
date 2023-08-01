@@ -1,6 +1,6 @@
 <template>
   <router-link :to="`/work/${workid}`">
-    <q-img
+    <q-img v-show="!noPic"
       :src="coverUrl"
       :ratio="4/3"
       :img-class="imgClass"
@@ -39,6 +39,10 @@ export default {
 
     release: {
       required: true
+    },
+
+    historys: {
+      required: false
     }
   },
 
@@ -51,12 +55,17 @@ export default {
   computed: {
     coverUrl () {
       // 从 LocalStorage 中读取 token
+      // console.log(this.historys)
       const token = this.$q.localStorage.getItem('jwt-token') || ''
       return this.workid ? `/api/cover/${this.workid}?token=${token}` : ""
     },
 
     rjcode () {
-      return (`000000${this.workid}`).slice(-6)
+      if (this.workid>=1000000) {
+            return (`00000000${this.workid}`).slice(-8);
+          } else {
+            return (`000000${this.workid}`).slice(-6);
+          }
     },
 
     imgClass () {
@@ -72,6 +81,10 @@ export default {
           return this.blurFlag ? "blur-image" : ""
         }
       }
+    },
+
+    noPic (){
+      return this.$q.localStorage.getItem('noPicFlag');
     }
   },
 

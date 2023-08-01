@@ -26,6 +26,7 @@ export default function () {
     rewindSeekTime: 5,
     forwardSeekTime: 30,
     rewindSeekMode: false,
+    startTime: 0,
     forwardSeekMode: false
   }
 }

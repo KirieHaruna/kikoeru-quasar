@@ -155,6 +155,9 @@
 
       <q-btn dense @click="showReviewDialog = true" color="cyan q-mt-sm shadow-4 q-mx-xs q-px-sm" label="写评论" />
 
+      <!-- 显示歌词文件check -->
+      <q-toggle v-model="showLyrics" @input="whenShowLyricsClick()" label="显示歌词文件" color="cyan" class="q-mt-sm shadow-4 q-mx-xs q-px-sm" />
+
       <WriteReview v-if="showReviewDialog" @closed="processReview" :workid="metadata.id" :metadata="metadata"></WriteReview>
     </div>
   </div>
@@ -188,7 +191,8 @@ export default {
       userMarked: false,
       progress: '',
       showReviewDialog: false,
-      showTags: true
+      showTags: true,
+      showLyrics: this.$store.state.User.displayLrcFile
     }
   },
 
@@ -198,7 +202,8 @@ export default {
         return (a.review_point > b.review_point) ? -1 : 1;
       }
       return this.metadata.rate_count_detail.slice().sort(compare);
-    }
+    },
+
   },
 
   watch: {
@@ -279,6 +284,11 @@ export default {
     processReview () {
       this.showReviewDialog = false;
     },
+
+    //当showLyrics改变时，触发
+    whenShowLyricsClick () {
+      this.$store.commit('User/DISPLAY_LRC_FILE', this.showLyrics);
+    }
   }
 }
 </script>

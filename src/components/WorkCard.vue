@@ -1,7 +1,7 @@
 <template>
   <q-card style="background:#222222;">
     <router-link :to="`/work/${metadata.id}`">
-      <CoverSFW :workid="metadata.id" :nsfw="false" :release="metadata.release" />
+      <CoverSFW :workid="metadata.id" :nsfw="false" :release="metadata.release" :historys = "historys"/>
     </router-link>
 
     <q-separator />
@@ -68,7 +68,7 @@
         <!-- DLsite链接 -->
         <div class="col-auto">
           <q-icon name="launch" size="xs" />
-          <a class="text-blue" :href="`https://www.dlsite.com/home/work/=/product_id/RJ${String(metadata.id).padStart(6,'0')}.html`" rel="noreferrer noopener" target="_blank">DLsite</a>
+          <a class="text-blue" :href="`https://www.dlsite.com/home/work/=/product_id/RJ${String(metadata.id).padStart(metadata.id < 1000000 ? 6 : 8, '0')}.html`" rel="noreferrer noopener" target="_blank">DLsite</a>
         </div>
       </div>
 
@@ -79,6 +79,16 @@
         <span v-if="!metadata.nsfw" class="q-mx-sm" style="background: #e6f7d6; color: #56842a">全年龄</span>
         <span v-if="!metadata.lrc" class="q-mx-sm" style="background: #FFFFF0; color: #FF00FF">带字幕</span>
       </div>
+
+      <div v-show="historys">
+        <div v-for="(history, index) in historys" :key="index">
+          <span v-if="history.user_name === user" class="q-mx-sm">上次听到:</span>
+          <span v-if="history.user_name === user" class="text-blue truncate-text">{{ truncateText(history.track_name, 15) }}</span>
+          <span v-if="history.user_name === user" class="q-mx-sm">位置:</span>
+          <span v-if="history.user_name === user">{{ formattedTime(history.play_time) }}</span>
+        </div>
+      </div>
+
 
       <!-- 标签 -->
       <div class="q-ma-xs" v-if="showTags">
@@ -105,6 +115,12 @@
           </q-chip>
         </router-link>
       </div>
+    </div>
+    <div v-if="historys" class="absolute-bottom-right" style="line-height: 30px; display: flex; justify-content: flex-end; align-items: center;">
+      <router-link :to="`/work/${metadata.id}?continue=true`">
+        <q-icon name="play_arrow" color="blue" style="font-size: 24px; margin-top: -5px;"/>
+        <span class="text-blue" style="font-size: 18px; margin-top: 15px;">继续播放</span>
+      </router-link>
     </div>
   </q-card>
 </template>
@@ -149,11 +165,19 @@ export default {
       }
 
       return this.metadata.rate_count_detail.slice().sort(compare);
+    },
+    user: function() {
+      return this.$store.state.User.name;
+    },
+
+    historys: function() {
+      return this.metadata.history ? [this.metadata.history[0]] : null
     }
   },
 
   // TODO: Refactor with Vuex?
   mounted() {
+    // console.log(this.historys);
     if (this.metadata.userRating) {
       this.userMarked = true;
       this.rating = this.metadata.userRating;
@@ -183,6 +207,25 @@ export default {
   },
 
   methods: {
+    truncateText(text, maxLength) {
+      // console.log(text);
+      if (text !== null && text.length > maxLength) {
+        return text.slice(0, maxLength) + '...';
+      } else {
+        return text;
+      }
+    },
+    
+
+    formattedTime(time) {
+      // console.log(time);
+      time = Math.floor(time)
+      const minutes = Math.floor(time / 60);
+      const seconds = time % 60;
+
+      // 使用 toString() 和 padStart() 方法来确保秒是两位数
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    },
     submitRating (payload) {
       this.$axios.put('/api/review', payload)
         .then((response) => {

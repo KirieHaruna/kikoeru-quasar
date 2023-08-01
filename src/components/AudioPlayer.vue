@@ -2,10 +2,11 @@
   <div>
     <!-- 播放器 -->
     <q-slide-transition>
-      <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right bg-white text-black audio-player" @mousewheel.prevent @touchmove.prevent>
+      <q-card square v-show="currentPlayingFile.hash && !hide" class="fixed-bottom-right text-white audio-player" @mousewheel.prevent @touchmove.prevent style="background:#111111;">
         <!-- 音声封面 -->
         <div class="bg-dark row items-center albumart">
-          <q-img contain transition="fade" :src="coverUrl" :ratio="4/3" />
+          <q-img v-if="noPic" contain transition="fade" :src="coverUrl" :ratio="4/3" style="display:none;"/>
+          <q-img v-else contain transition="fade" :src="coverUrl" :ratio="4/3" />
           <q-btn dense round size="md" color="white" text-color="dark" icon="keyboard_arrow_down" @click="toggleHide()" class="absolute-top-left q-ma-sm" />
           <q-btn dense round size="md" color="white" text-color="dark" icon="more_vert" class="absolute-top-right q-ma-sm">
             <q-menu anchor="bottom right" self="top right">
@@ -28,7 +29,7 @@
                 </q-item-section>
               </q-item>
               
-              <q-item clickable v-ripple @click="openWorkDetail()" v-close-popup>
+              <q-item clickable v-ripple @click="openWorkDetail()" v-close-popup >
                 <q-item-section avatar>
                   <!-- placeholder -->
                 </q-item-section>
@@ -47,7 +48,7 @@
         <!-- 进度条控件 -->
         <div class="row items-center q-mx-sm q-my-sm" style="height: 40px">
           <div class="col-auto">{{ formatSeconds(currentTime) }}</div>
-          <AudioElement class="col" />
+          <AudioElement class="col" :videoMode="videoMode"/>
           <div class="col-auto">{{ formatSeconds(duration) }}</div>
         </div>
 
@@ -166,7 +167,8 @@ export default {
       editCurrentPlayList: false,
       queueCopy: [],
       hideSeekButton: false,
-      swapSeekButton: false
+      swapSeekButton: false,
+      videoMode: false
     }
   },
 
@@ -205,6 +207,7 @@ export default {
   },
 
   computed: {
+
     coverUrl () {
       // 从 LocalStorage 中读取 token
       const token = this.$q.localStorage.getItem('jwt-token') || ''
@@ -276,6 +279,10 @@ export default {
       }
     },
 
+    noPic (){
+      return this.$q.localStorage.getItem('noPicFlag');
+    },
+
     ...mapState('AudioPlayer', [
       'playing',
       'hide',
@@ -308,8 +315,13 @@ export default {
       'SET_QUEUE',
       'REMOVE_FROM_QUEUE',
       'EMPTY_QUEUE',
+      'SET_START_TIME',
       'SET_VOLUME'
     ]),
+
+    switchVideoMode () {
+      this.videoMode = !this.videoMode
+    },
 
     formatSeconds (seconds) {
       let h = Math.floor(seconds / 3600) < 10

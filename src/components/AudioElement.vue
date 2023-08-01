@@ -9,12 +9,14 @@
     @playing="onPlaying()"
     @waiting="onWaiting()"
     @pause="onPause()"
+    @sourcechange="onSourceChange()"
   >
     <audio crossorigin="anonymous" >
       <source v-if="source" :src="source" />
     </audio>
   </vue-plyr>
 </template>
+
 
 <script>
 import Lyric from 'lrc-file-parser'
@@ -30,6 +32,7 @@ export default {
     return {
       lrcObj: null,
       lrcAvailable: false,
+      count: 0
     }
   },
 
@@ -77,6 +80,9 @@ export default {
       if (this.player.duration) {
         // 缓冲至可播放状态
         flag ? this.player.play() : this.player.pause()
+        if(this.$store.state.AudioPlayer.startTime != 0) {
+          console.log('startTime', this.$store.state.AudioPlayer.startTime)
+        }
       }
       // this.playLrc(flag);
     },
@@ -113,12 +119,17 @@ export default {
     forwardSeekMode(forward) {
       if (forward) {
         this.player.forward(this.forwardSeekTime);
+        // this.player.currentTime = 60;
         this.SET_FORWARD_SEEK_MODE(false);
       }
     }
   },
 
   methods: {
+    onSourceChange(event){
+      console.log('onPlay' + event)
+      this.player.currentTime = this.$store.state.AudioPlayer.startTime;
+    },
     /**
      * 当 外部暂停（线控暂停、软件切换）、用户控制暂停、seek 时会触发本事件
      */
@@ -131,9 +142,15 @@ export default {
      * 当播放器真正开始播放时会触发本事件
      */
     onPlaying() {
-      // console.log('playing')
+      // console.log('this.player' + this.$store.state.AudioPlayer.currentTime)
+      // this.player.seek(this.$store.state.AudioPlayer.currentTime);
       this.playLrc(true)
       this.PLAY()
+      if(this.$store.state.AudioPlayer.startTime != 0) {
+        this.player.currentTime = this.$store.state.AudioPlayer.startTime;
+        this.$store.commit('AudioPlayer/SET_START_TIME', 0);
+      }
+      // this.player.currentTime = this.$store.state.AudioPlayer.startTime;
     },
     /**
      * 当播放器缓冲区空，被迫暂停加载时会触发本事件
@@ -146,6 +163,7 @@ export default {
     ...mapMutations('AudioPlayer', [
       'SET_DURATION',
       'SET_CURRENT_TIME',
+      'SET_START_TIME',
       'PAUSE',
       'PLAY',
       'SET_TRACK',
@@ -170,6 +188,18 @@ export default {
     onTimeupdate () {
       // 当目前的播放位置已更改时触发
       this.SET_CURRENT_TIME(this.player.currentTime)
+      this.count += 1
+      if (this.count == 10) {
+        // console.log(this.currentPlayingFile)
+        this.count = 0
+        this.$axios.post('/api/media/history', {
+          play_time: this.player.currentTime,
+          hash: this.currentPlayingFile.hash,
+          username: this.$store.state.User.name,
+          id: this.currentPlayingFile.hash.split('/')[0],
+          track_name: this.currentPlayingFile.title,
+        })
+      }
       if (this.sleepMode && this.sleepTime) {
         const currentTime = new Date()
         const currentHourStr = currentTime.getHours().toString().padStart(2, '0')

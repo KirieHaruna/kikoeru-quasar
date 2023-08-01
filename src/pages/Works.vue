@@ -9,6 +9,26 @@
 
     <div :class="`row justify-center ${listMode ? 'list' : 'q-mx-md'}`">
       <q-infinite-scroll @load="onLoad" :offset="250" :disable="stopLoad" style="max-width: 1680px;" class="col">
+        <div class="row justify-start">
+          <q-btn
+            dense
+            rounded
+            color="primary"
+            text-color="white"
+            icon="history"
+            label="播放历史"
+            @click="showAll = !showAll"
+          />
+        </div>
+        <div class="row q-col-gutter-x-md q-col-gutter-y-sm justify-center" style="max-width: 1680px;"> 
+          <div v-for="(work, index) in history.slice(0, 6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+            <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
+          </div>
+          <div v-for="(work, index) in history.slice(6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6" v-show="showAll">
+            <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
+          </div>
+        </div>
+        
         <div v-show="works.length" class="row justify-between q-mb-md q-mr-sm">
           <!-- 排序选择框 -->
           <q-select
@@ -117,11 +137,13 @@ export default {
 
   data () {
     return {
+      showAll: false,
       listMode: false,
       showLabel: true,
       detailMode: true,
       stopLoad: false,
       works: [],
+      history: [],
       pageTitle: '',
       page: 1,
       pagination: { currentPage:0, pageSize:12, totalCount:0 },
@@ -285,6 +307,11 @@ export default {
     onLoad (index, done) {
       this.requestWorksQueue()
         .then(() => done())
+      this.$axios.get('/api/history')
+      .then((response) => {
+        this.history = response.data
+        // console.log(response.data)
+      })
     },
 
     requestWorksQueue () {
@@ -396,4 +423,5 @@ export default {
       width: 560px;
     }
   }
+
 </style>

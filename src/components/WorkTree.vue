@@ -1,3 +1,4 @@
+<!-- eslint-disable no-unsafe-finally -->
 <template>
   <div class="q-ma-md " style="">
     <q-breadcrumbs gutter="xs" v-if="path.length">
@@ -15,7 +16,7 @@
         <q-item
           clickable
           v-ripple
-          v-for="(item, index) in fatherFolder"
+          v-for="(item, index) in filteredItems"
           :key="index"
           :active="item.type === 'audio' && currentPlayingFile.hash === item.hash"
           active-class="text-white bg-teal"
@@ -34,6 +35,11 @@
             <q-item-label lines="2">{{ item.title }}</q-item-label>
             <q-item-label v-if="item.children" caption lines="1"  class="text-white">{{ `${item.children.length} 项目` }}</q-item-label>
           </q-item-section>
+
+          <q-item-section side v-if="his === item.hash">
+            <div class="q-ml-md text-white">{{ formattedTime }}</div>
+          </q-item-section>
+            
 
           <!-- 上下文菜单 -->
           <q-menu
@@ -81,6 +87,11 @@ export default {
       type: Array,
       required: true,
     },
+    history: {
+      type: Array,
+      required: false,
+    },
+    WorkDetails: Object,
   },
 
   watch: {
@@ -90,13 +101,56 @@ export default {
   },
 
   computed: {
+
+    formattedTime() {
+      let time = Math.floor(this.playTime)
+      const minutes = Math.floor(time / 60);
+      const seconds = time % 60;
+
+      // 使用 toString() 和 padStart() 方法来确保秒是两位数
+      return `播放至${minutes}:${seconds.toString().padStart(2, '0')}`;
+    },
+
     fatherFolder () {
       let fatherFolder = this.tree.concat()
+      // console.log(fatherFolder)
       this.path.forEach(folderName => {
         fatherFolder = fatherFolder.find(item => item.type === 'folder' && item.title === folderName).children
       })
+      // console.log(this.playTime + ' :' + this.his)
 
       return fatherFolder
+    },
+    
+    filteredItems() {
+      // 从$store中获取showLrc的值
+      let showLyrics = this.$store.state.User.displayLrcFile
+      if (showLyrics) {
+        // console.log(showLyrics)
+        return this.fatherFolder
+      }else {
+        // console.log(showLyrics)
+        return this.fatherFolder.filter(item => item.type !== 'text')
+      }
+    },
+
+    his () {
+      try{
+        let item = this.history.concat()[0].hash
+        return item
+      }catch {
+        return ''
+      }
+      
+    },
+
+    playTime () {
+      try{
+        let item = this.history.concat()[0].play_time
+        return item
+      }catch {
+        return ''
+      }
     },
 
     queue () {
@@ -118,8 +172,71 @@ export default {
       'currentPlayingFile'
     ])
   },
+  async mounted () {
+    let count = 0
+    while (!this.playTime && count < 30) {
+      count += 1
+      await this.sleep(100);
+    }
+    // await this.sleep(500);
+    // console.log(this.playTime + ' :' + this.his + ' :' + this.$route.query.continue)
+    if (this.$route.query.continue === 'true') {
+      // console.log('aaa :' + this.$route.query.continue)
+      let result = this.make_queue(this.fatherFolder, this.his)
+      let queue = result.queue.concat()
+      this.$router.replace({ query: { continue: false } });
+      // console.log(this.playTime + ' :' + this.his)
+      if (result.queue !== [] && result.isHitted){
+        this.$store.commit('AudioPlayer/SET_QUEUE', {
+          queue: queue,
+          index: queue.findIndex(file => file.hash === this.his),
+          resetPlaying: true,
+          time: this.playTime
+        })
+      }
+    }
+  },
 
   methods: {
+    sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    },
+
+    make_queue(fatherFolder, hash) {
+      let queue = []
+      let childFolder = []
+      let isHitted = false
+
+      for (const item of fatherFolder) {
+        if (item.type === 'folder') {
+          const result = this.make_queue(item.children, hash)
+          queue = queue.concat(result.queue)
+          childFolder = childFolder.concat(result.childFolder)
+          isHitted = isHitted || result.isHitted
+        } else if (item.type === 'audio') {
+          queue.push(item)
+        }
+
+        if (item.hash === hash) {
+          isHitted = true
+        }
+      }
+
+      if (isHitted) {
+        return {
+          queue: queue,
+          childFolder: childFolder,
+          isHitted: isHitted
+        }
+      } else {
+        return {
+          queue: [],
+          childFolder: [],
+          isHitted: false
+        }
+      }
+    },
+
     playIcon (hash) {
       return this.playing && this.currentPlayingFile.hash === hash ? "pause" : "play_arrow"            
     },
@@ -152,7 +269,8 @@ export default {
         this.$store.commit('AudioPlayer/SET_QUEUE', {
           queue: this.queue.concat(),
           index: this.queue.findIndex(file => file.hash === item.hash),
-          resetPlaying: true
+          resetPlaying: true,
+          time: this.his === item.hash ? this.playTime : 0
         })
       }
     },
@@ -164,7 +282,8 @@ export default {
         this.$store.commit('AudioPlayer/SET_QUEUE', {
           queue: this.queue.concat(),
           index: this.queue.findIndex(file => file.hash === hash),
-          resetPlaying: true
+          resetPlaying: true,
+          time: this.his === hash ? this.playTime : 0
         })
       }
     },

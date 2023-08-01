@@ -36,10 +36,19 @@ const mutations = {
       state.queueIndex -= 1
     }
   },
-
+  SET_START_TIME (state, time) {
+    state.startTime = time
+  },
+  
   SET_QUEUE (state, payload) {
     state.queue = payload.queue
     state.queueIndex = payload.index
+    if (payload.time) {
+      state.startTime = payload.time
+    }else{
+      state.startTime = 0
+    }
+    // console.log(state.startTime)
 
     if (payload.resetPlaying) {
       state.playing = true
