@@ -8,7 +8,7 @@
     </div>
 
     <div :class="`row justify-center ${listMode ? 'list' : 'q-mx-md'}`">
-      <q-infinite-scroll @load="onLoad" :offset="250" :disable="stopLoad" style="max-width: 1680px;" class="col">
+      <q-infinite-scroll @load="onLoad" :offset="250" :disable="stopLoad" style="max-width: 2560px;" class="col">
         <div class="row justify-start">
           <q-btn
             dense
@@ -20,7 +20,7 @@
             @click="showAll = !showAll"
           />
         </div>
-        <div class="row q-col-gutter-x-md q-col-gutter-y-sm justify-center" style="max-width: 1680px;"> 
+        <div class="row q-col-gutter-x-md q-col-gutter-y-sm justify-center" style="max-width: 2560px;"> 
           <div v-for="(work, index) in history.slice(0, 6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
             <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
           </div>
@@ -42,6 +42,7 @@
             :options="options"
             label="排序"
             class="col-auto"
+            :style="{ fontSize: $q.screen.width <= 600 ? '85%' : '100%' }"
           />
 
           <!-- 切换显示模式按钮 -->
@@ -103,7 +104,7 @@
         </q-list>
 
         <div v-else class="row q-col-gutter-x-md q-col-gutter-y-lg">
-          <div class="col-xs-12 col-sm-6 col-md-4" :class="detailMode ? 'col-lg-3 col-xl-3': 'col-lg-2 col-xl-2'" v-for="work in works" :key="work.id">
+          <div class="col-xs-6 col-sm-6 col-md-4" :class="detailMode ? 'col-lg-3 col-xl-2': 'col-lg-2 col-xl-2'" v-for="work in works" :key="work.id">
             <WorkCard :metadata="work" :thumbnailMode="!detailMode" class="fit"/>
           </div>
         </div>
@@ -318,10 +319,8 @@ export default {
       const params = {
         order: this.sortOption.order,
         sort: this.sortOption.sort,
-        page: this.pagination.currentPage + 1 || 1
-      }
-      if (this.sortOption.order === 'random') {
-        params.seed = this.seed;
+        page: this.pagination.currentPage + 1 || 1,
+        seed: this.seed
       }
 
       return this.$axios.get(this.url, { params })

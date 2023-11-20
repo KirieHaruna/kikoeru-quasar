@@ -8,23 +8,23 @@
 
     <div v-if="!thumbnailMode">
       <!-- 标题 -->
-      <div class="q-mx-sm text-h6 text-weight-regular ellipsis-2-lines">
+      <div class="text-weight-regular ellipsis-2-lines" :class="{'q-mx-sm text-h6': $q.screen.width >= 600}" >
         <router-link :to="`/work/${metadata.id}`" class="text-white">
           {{ metadata.title }}
         </router-link>
       </div>
 
       <!-- 社团 -->
-      <div class="q-ml-sm q-mt-sm q-mb-xs text-subtitle1 text-weight-regular ellipsis">
+      <div :class="{ 'small-font': $q.screen.width <= 600, 'q-ml-sm q-mt-sm q-mb-xs text-subtitle1 text-weight-regular ellipsis': $q.screen.width >= 600}">
         <router-link :to="`/works?circleId=${metadata.circle.id}`" class="text-grey">
           {{ metadata.circle.name }}
         </router-link>
       </div>
 
       <!-- 评价&评论 -->
-      <div v-show="metadata.title" class="row items-center">
+      <div v-show="metadata.title" class="row items-center" :class="{ 'small-font': $q.screen.width <= 600 }">
         <!-- 评价 -->
-        <div class="col-auto q-ml-sm">
+        <div class="col-auto" :class="{ 'q-ml-sm': $q.screen.width >= 600 }">
           <q-rating
             v-model="rating"
             size="sm"
@@ -55,7 +55,7 @@
         </div>
 
         <div class="col-auto">
-          <span class="text-weight-medium text-body1 text-red">{{ metadata.rate_average_2dp }}</span>
+          <span class="text-weight-medium text-red" :class="{'text-body1 ': $q.screen.width >= 600}">{{ metadata.rate_average_2dp }}</span>
           <span class="text-grey"> ({{ metadata.rate_count }})</span>
         </div>
 
@@ -73,38 +73,38 @@
       </div>
 
       <!-- 价格&售出数 -->
-      <div v-show="metadata.title">
-        <span class="q-mx-sm text-weight-medium text-h6 text-red">{{ metadata.price }} 日元</span>
+      <div v-show="metadata.title && $q.screen.width >= 600" :class="{ 'small-font': $q.screen.width <= 600 }">
+        <span class="text-weight-medium text-red" :class="{'q-mx-sm text-h6 ': $q.screen.width >= 600}">{{ metadata.price }} 日元</span>
         <span>售出数: {{ metadata.dl_count }}</span>
         <span v-if="!metadata.nsfw" class="q-mx-sm" style="background: #e6f7d6; color: #56842a">全年龄</span>
         <span v-if="!metadata.lrc" class="q-mx-sm" style="background: #FFFFF0; color: #FF00FF">带字幕</span>
       </div>
 
-      <div v-show="historys">
+      <div v-show="historys" :class="{ 'small-font': $q.screen.width <= 600 }">
         <div v-for="(history, index) in historys" :key="index">
-          <span v-if="history.user_name === user" class="q-mx-sm">上次听到:</span>
-          <span v-if="history.user_name === user" class="text-blue truncate-text">{{ truncateText(history.track_name, 15) }}</span>
-          <span v-if="history.user_name === user" class="q-mx-sm">位置:</span>
+          <span v-if="history.user_name === user" :class="{'q-mx-sm': $q.screen.width >= 600}">上次听到:</span>
+          <span v-if="history.user_name === user" class="text-blue truncate-text">{{  $q.screen.width > 600 ? truncateText(history.track_name, 15) : truncateText(history.track_name, 10) }}</span>
+          <span v-if="history.user_name === user" :class="{'q-mx-sm': $q.screen.width >= 600}">位置:</span>
           <span v-if="history.user_name === user">{{ formattedTime(history.play_time) }}</span>
         </div>
       </div>
 
 
       <!-- 标签 -->
-      <div class="q-ma-xs" v-if="showTags">
+      <div v-if="showTags" :class="{ 'q-ma-xs': $q.screen.width >= 600 }">
         <router-link
           v-for="(tag, index) in metadata.tags"
           :to="`/works?tagId=${tag.id}`"
           :key=index
         >
-          <q-chip size="md" class="shadow-2">
+          <q-chip size="md" class="shadow-2" :style="{ fontSize: $q.screen.width <= 600 ? '10px' : '14px', fontWeight: $q.screen.width <= 600 ? '500' : '400' }">
             {{ tag.name }}
           </q-chip>
         </router-link>
       </div>
 
       <!-- 声优 -->
-      <div class="q-mx-xs q-my-sm">
+      <div :class="{ 'small-font': $q.screen.width <= 600, 'q-ma-xs q-my-sm': $q.screen.width >= 600  }">
         <router-link
           v-for="(va, index) in metadata.vas"
           :to="`/works?vaId=${va.id}`"
@@ -116,10 +116,10 @@
         </router-link>
       </div>
     </div>
-    <div v-if="historys" class="absolute-bottom-right" style="line-height: 30px; display: flex; justify-content: flex-end; align-items: center;">
+    <div v-if="historys" class="absolute-bottom-right" style="line-height: 30px; display: flex; justify-content: flex-end; align-items: center;" :style="{ 'line-height': $q.screen.width <= 600 ? '20px' : '30px' }">
       <router-link :to="`/work/${metadata.id}?continue=true`">
-        <q-icon name="play_arrow" color="blue" style="font-size: 24px; margin-top: -5px;"/>
-        <span class="text-blue" style="font-size: 18px; margin-top: 15px;">继续播放</span>
+        <q-icon name="play_arrow" color="blue" :style="{ fontSize: $q.screen.width <= 600 ? '15px' : '24px', 'margin-top': $q.screen.width <= 600 ? '0px' : '-5px' }"/>
+        <span class="text-blue" :style="{ fontSize: $q.screen.width <= 600 ? '12px' : '18px', 'margin-top': $q.screen.width <= 600 ? '-10px' : '15px' }">继续播放</span>
       </router-link>
     </div>
   </q-card>
