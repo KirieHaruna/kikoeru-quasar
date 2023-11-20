@@ -10,3 +10,10 @@
 a {
   text-decoration:none;
 }
+
+.small-font {
+  font-size: 70%;
+  * {
+    font-size: 100% !important;
+  }
+}
