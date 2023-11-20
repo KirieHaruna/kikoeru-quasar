@@ -1,5 +1,5 @@
 <template>
-  <router-link :to="`/work/${workid}`">
+  <router-link :to="`/work/${workid}`" :class="{ 'small-font': $q.screen.width <= 600 }">
     <q-img v-show="!noPic"
       :src="coverUrl"
       :ratio="4/3"
@@ -9,13 +9,13 @@
       @mouseover="toggleBlurFlag()"
       @mouseout="toggleBlurFlag()"
     >
-      <div class="absolute-top-left transparent" style="padding: 0;">
+      <div class="absolute-top-left " style="padding: 0;">
         <q-chip dense square color="brown" text-color="white" class="q-ma-sm">
           {{`RJ${rjcode}`}}
         </q-chip>
       </div>
 
-      <div :v-if="release" class="absolute-bottom-right" style="padding: 5px;">
+      <div :v-if="release" class="absolute-bottom-right" :style="{'padding': $q.screen.width <= 600 ? '0px' : '5px'}">
         {{release}}
       </div>
     </q-img>
