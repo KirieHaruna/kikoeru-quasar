@@ -432,4 +432,10 @@ export default {
       min-width: 280px;
     }
   }
+  ::v-deep .plyr--audio .plyr__controls {
+    background: #111111 !important;
+    border-radius: inherit;
+    color: #4a5764;
+    padding: 10px;
+  }
 </style>

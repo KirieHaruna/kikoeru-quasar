@@ -26,9 +26,9 @@
     "@quasar/extras": "^1.10.4",
     "axios": "^0.21.1",
     "lrc-file-parser": "^1.0.7",
-    "plyr": "^3.6.7",
+    "plyr": "=3.6.7",
     "quasar": "^1.15.12",
-    "vue-plyr": "^6.0.4",
+    "vue-plyr": "=6.0.4",
     "vue-slider-component": "^3.2.11",
     "vue-socket.io": "^3.0.10",
     "vuedraggable": "^2.24.3"
