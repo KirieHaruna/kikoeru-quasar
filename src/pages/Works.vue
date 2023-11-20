@@ -319,8 +319,10 @@ export default {
       const params = {
         order: this.sortOption.order,
         sort: this.sortOption.sort,
-        page: this.pagination.currentPage + 1 || 1,
-        seed: this.seed
+        page: this.pagination.currentPage + 1 || 1
+      }
+      if (this.sortOption.order === 'random') {
+        params.seed = this.seed;
       }
 
       return this.$axios.get(this.url, { params })
