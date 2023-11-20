@@ -9,7 +9,7 @@
       @mouseover="toggleBlurFlag()"
       @mouseout="toggleBlurFlag()"
     >
-      <div class="absolute-top-left " style="padding: 0;">
+      <div class="absolute-top-left transparent" style="padding: 0;">
         <q-chip dense square color="brown" text-color="white" class="q-ma-sm">
           {{`RJ${rjcode}`}}
         </q-chip>
