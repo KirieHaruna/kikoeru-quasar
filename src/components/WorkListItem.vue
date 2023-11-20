@@ -1,5 +1,5 @@
 <template>
-  <q-item clickable :to="`/work/${metadata.id}${isHistoryItem ? '?continue=true' : ''}`" class="bg-dark text-white" :class="{'rounded-borders': isHistoryItem}" style="padding: 5px;">
+  <q-item clickable :to="`/work/${metadata.id}${isHistoryItem ? '?continue=true' : ''}`" class="bg-dark text-white" :class="{'rounded-borders': isHistoryItem, 'small-font': $q.screen.width <= 600}" style="padding: 5px;">
     <q-item-section avatar style="padding: 0px 5px 0px 0px;">
       <router-link :to="`/work/${metadata.id}${isHistoryItem ? '?continue=true' : ''}`">
         <q-img transition="fade" :src="samCoverUrl" :style="isHistoryItem ? { height: '40px', width: '40px' } : { height: '60px', width: '60px' }" />
