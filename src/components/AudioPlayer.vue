@@ -58,7 +58,7 @@
         <q-item style="height: 55px; padding: 0px 15px;" class="text-center non-selectable">
           <q-item-section>
             <q-item-label lines="2" class="text-bold">{{ currentPlayingFile.title }}</q-item-label>
-            <q-item-label caption lines="1">{{ currentPlayingFile.workTitle }}</q-item-label>
+            <q-item-label caption lines="1" class="text-white"> {{ currentPlayingFile.workTitle }}</q-item-label>
           </q-item-section>
         </q-item>
 
@@ -178,6 +178,31 @@ export default {
     }
     if (this.$q.localStorage.has('swapSeekButton')) {
       this.swapSeekButton = this.$q.localStorage.getItem('swapSeekButton')
+    }
+
+    //给手机端添加线控
+    // const audioElement = this.$refs.audioElement
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: this.currentPlayingFile.title,
+        // artist: 'Artist Name',
+        album: this.currentPlayingFile.workTitle,
+        // artwork: [
+        //   { src: this.coverUrl, sizes: '512x512', type: 'image/jpeg' }
+        // ]
+      });
+      navigator.mediaSession.setActionHandler('play', ()=> { this.PLAY()});
+      navigator.mediaSession.setActionHandler('pause', ()=> { this.PAUSE()});
+      navigator.mediaSession.setActionHandler('previoustrack', ()=> { this.PREVIOUS_TRACK()});
+      navigator.mediaSession.setActionHandler('nexttrack', ()=> { this.NEXT_TRACK()});
+
+      navigator.mediaSession.setActionHandler('seekbackward', ()=> {
+        this.rewind(true)
+      });
+      navigator.mediaSession.setActionHandler('seekforward', ()=> {
+        this.forward(true)
+      });
     }
   },
 
@@ -322,7 +347,6 @@ export default {
       'SET_START_TIME',
       'SET_VOLUME'
     ]),
-
     switchVideoMode () {
       this.videoMode = !this.videoMode
     },

@@ -1,17 +1,8 @@
 <template>
-  <vue-plyr
-    ref="plyr"
-    :emit="['canplay', 'timeupdate', 'ended', 'seeked', 'playing', 'waiting', 'pause']"
-    @canplay="onCanplay()"
-    @timeupdate="onTimeupdate()"
-    @ended="onEnded()"
-    @seeked="onSeeked()"
-    @playing="onPlaying()"
-    @waiting="onWaiting()"
-    @pause="onPause()"
-    @sourcechange="onSourceChange()"
-  >
-    <audio v-if="!videoMode" crossorigin="anonymous">
+  <vue-plyr ref="plyr" :emit="['canplay', 'timeupdate', 'ended', 'seeked', 'playing', 'waiting', 'pause', 'seeking']"
+    @canplay="onCanplay()" @timeupdate="onTimeupdate()" @ended="onEnded()" @seeked="onSeeked()" @playing="onPlaying()"
+    @waiting="onWaiting()" @pause="onPause()" @sourcechange="onSourceChange()">
+    <audio v-if="!videoMode" crossorigin="anonymous" ref="audioElement">
       <source v-if="source" :src="source" />
     </audio>
     <video v-else crossorigin="anonymous">
@@ -41,7 +32,7 @@ export default {
   },
 
   computed: {
-    player () {
+    player() {
       return this.$refs.plyr.player
     },
 
@@ -55,9 +46,9 @@ export default {
     //   }
     // },
 
-    source () {
+    source() {
       // 从 LocalStorage 中读取 token
-      console.log(this.currentPlayingFile)
+      // console.log(this.currentPlayingFile)
       const token = this.$q.localStorage.getItem('jwt-token') || ''
       // New API
       if (this.currentPlayingFile.mediaStreamUrl) {
@@ -91,11 +82,11 @@ export default {
   },
 
   watch: {
-    playing (flag) {
+    playing(flag) {
       if (this.player.duration) {
         // 缓冲至可播放状态
         flag ? this.player.play() : this.player.pause()
-        if(this.$store.state.AudioPlayer.startTime != 0) {
+        if (this.$store.state.AudioPlayer.startTime != 0) {
           console.log('startTime', this.$store.state.AudioPlayer.startTime)
         }
       }
@@ -103,7 +94,7 @@ export default {
     },
 
     // watch source -> media.load() -> canPlay -> player.play()
-    source (url) {
+    source(url) {
       if (url) {
         // 加载新音频/视频文件
         this.player.media.load();
@@ -111,12 +102,12 @@ export default {
       }
     },
 
-    muted (flag) {
+    muted(flag) {
       // 切换静音状态
       this.player.muted = flag
     },
 
-    volume (val) {
+    volume(val) {
       // 屏蔽非法数值
       if (val < 0 || val > 1) {
         return
@@ -141,7 +132,7 @@ export default {
   },
 
   methods: {
-    onSourceChange(event){
+    onSourceChange(event) {
       console.log('onPlay' + event)
       // 销毁 vue-plyr 组件
       this.$refs.plyr.destroy();
@@ -167,7 +158,7 @@ export default {
       // this.player.seek(this.$store.state.AudioPlayer.currentTime);
       this.playLrc(true)
       this.PLAY()
-      if(this.$store.state.AudioPlayer.startTime != 0) {
+      if (this.$store.state.AudioPlayer.startTime != 0) {
         this.player.currentTime = this.$store.state.AudioPlayer.startTime;
         this.$store.commit('AudioPlayer/SET_START_TIME', 0);
       }
@@ -189,6 +180,7 @@ export default {
       'PLAY',
       'SET_TRACK',
       'NEXT_TRACK',
+      'PREVIOUS_TRACK',
       'SET_CURRENT_LYRIC',
       'SET_VOLUME',
       'CLEAR_SLEEP_MODE',
@@ -196,11 +188,11 @@ export default {
       'SET_FORWARD_SEEK_MODE'
     ]),
 
-    onCanplay () {
+    onCanplay() {
       // 缓冲至可播放状态时触发 (只有缓冲至可播放状态, 才能获取媒体文件的播放时长)
       this.SET_DURATION(this.player.duration)
 
-      console.log('Playing:', this.videoMode);
+      // console.log('Playing:', this.videoMode);
 
       // 播放
       if (this.playing && this.player.currentTime !== this.player.duration) {
@@ -208,7 +200,7 @@ export default {
       }
     },
 
-    onTimeupdate () {
+    onTimeupdate() {
       // 当目前的播放位置已更改时触发
       this.SET_CURRENT_TIME(this.player.currentTime)
       this.count += 1
@@ -239,7 +231,7 @@ export default {
       }
     },
 
-    onEnded () {
+    onEnded() {
       // 当前文件播放结束时触发
       switch (this.playMode.name) {
         case "all repeat":
@@ -258,7 +250,7 @@ export default {
           break
         case "shuffle": {
           // 随机播放
-          const index = Math.floor(Math.random()*this.queue.length)
+          const index = Math.floor(Math.random() * this.queue.length)
           this.SET_TRACK(index)
           if (index === this.queueIndex) {
             this.player.currentTime = 0
@@ -282,10 +274,11 @@ export default {
       //     this.lrcObj.pause();
       //   }
       // }
+      // console.log("onseeked:" + this.playing)
     },
 
 
-    playLrc (playStatus) {
+    playLrc(playStatus) {
       if (this.lrcAvailable) {
         if (playStatus) {
           this.lrcObj.play(this.player.currentTime * 1000);
@@ -295,15 +288,15 @@ export default {
       }
     },
 
-    initLrcObj () {
-        this.lrcObj = new Lyric({
-          onPlay: (line, text) => {
-            this.SET_CURRENT_LYRIC(text);
-          },
-        })
+    initLrcObj() {
+      this.lrcObj = new Lyric({
+        onPlay: (line, text) => {
+          this.SET_CURRENT_LYRIC(text);
+        },
+      })
     },
 
-    loadLrcFile () {
+    loadLrcFile() {
       const token = this.$q.localStorage.getItem('jwt-token') || '';
       const fileHash = this.queue[this.queueIndex].hash;
       const url = `/api/media/check-lrc/${fileHash}?token=${token}`;
@@ -341,13 +334,15 @@ export default {
     },
   },
 
-  mounted () {
+  mounted() {
     // 初始化音量
     this.SET_VOLUME(this.player.volume);
     this.initLrcObj();
     if (this.source) {
       this.loadLrcFile();
     }
+
+    
   }
 }
 </script>

@@ -51,7 +51,7 @@
         <q-item-label class="q-pt-sm" v-if="mode === 'review'">
           <q-card class="my-card col-auto" @click="showReviewDialog = true" v-show="metadata.review_text" >
             <q-card-section class="q-pa-sm">
-              <pre class="q-ma-none">{{metadata.review_text}}</pre>
+              <pre class="q-ma-none text-grey">{{metadata.review_text}}</pre>
             </q-card-section>
           </q-card>
         </q-item-label>
