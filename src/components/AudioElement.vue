@@ -389,7 +389,6 @@ export default {
         }
         navigator.mediaSession.metadata = new MediaMetadata(mediaConfigObj);
         if (this.notifyBarButtonInited && (platform !== 'iOS')) { //被傻逼ios气晕， 如果为iOS则绑定第二次。
-          alert(platform !== 'iOS')
           return
         }
         navigator.mediaSession.setActionHandler('play', function () {
