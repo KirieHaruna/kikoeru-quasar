@@ -388,9 +388,9 @@ export default {
           artwork: this.noPicFlag ? [{ src: "" }] : [{ src: this.coverUrl }]
         }
         navigator.mediaSession.metadata = new MediaMetadata(mediaConfigObj);
-        if (this.notifyBarButtonInited && (platform !== 'iOS')) { //被傻逼ios气晕， 如果为iOS则绑定第二次。
-          return
-        }
+        // if (this.notifyBarButtonInited && (platform !== 'iOS')) { //ios则绑定第二次
+        //   return
+        // }
         navigator.mediaSession.setActionHandler('play', function () {
           _this.PLAY()
         });
@@ -402,14 +402,14 @@ export default {
           _this.PREVIOUS_TRACK()
         });
         navigator.mediaSession.setActionHandler('nexttrack', function () { _this.NEXT_TRACK() });
-        // if (platform !== 'iOS') {
-        //   navigator.mediaSession.setActionHandler('seekbackward', function () {
-        //     _this.SET_REWIND_SEEK_MODE(true)
-        //   });
-        //   navigator.mediaSession.setActionHandler('seekforward', function () {
-        //     _this.SET_FORWARD_SEEK_MODE(true)
-        //   });
-        // }
+        if (platform !== 'iOS') { //被傻逼ios气晕，只有3个按键，那就取消快进快退吧
+          navigator.mediaSession.setActionHandler('seekbackward', function () {
+            _this.SET_REWIND_SEEK_MODE(true)
+          });
+          navigator.mediaSession.setActionHandler('seekforward', function () {
+            _this.SET_FORWARD_SEEK_MODE(true)
+          });
+        }
 
         this.notifyBarButtonInited = true; //确保setHandler只会执行一次
       }
