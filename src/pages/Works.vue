@@ -21,10 +21,10 @@
           />
         </div>
         <div class="row q-col-gutter-x-md q-col-gutter-y-sm justify-center" style="max-width: 2560px;"> 
-          <div v-for="(work, index) in history.slice(0, 6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+          <div v-for="(work) in history.slice(0, 6)" :key="work.id" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
             <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
           </div>
-          <div v-for="(work, index) in history.slice(6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6" v-show="showAll">
+          <div v-for="(work) in history.slice(6)" :key="work.id" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6" v-show="showAll">
             <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
           </div>
         </div>

@@ -186,7 +186,7 @@ export default {
       let queue = result.queue.concat()
       this.$router.replace({ query: { continue: false } });
       // console.log(this.playTime + ' :' + this.his)
-      if (result.queue !== [] && result.isHitted){
+      if (result.queue.length>0 && result.isHitted){
         this.$store.commit('AudioPlayer/SET_QUEUE', {
           queue: queue,
           index: queue.findIndex(file => file.hash === this.his),

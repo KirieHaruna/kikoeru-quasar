@@ -1,7 +1,7 @@
 <template>
   <vue-plyr ref="plyr" :emit="['canplay', 'timeupdate', 'ended', 'seeked', 'playing', 'waiting', 'pause', 'seeking']"
     @canplay="onCanplay()" @timeupdate="onTimeupdate()" @ended="onEnded()" @seeked="onSeeked()" @playing="onPlaying()"
-    @waiting="onWaiting()" @pause="onPause()" @sourcechange="onSourceChange()">
+    @waiting="onWaiting()" @pause="onPause()" @sourcechange="onSourceChange()" @seeking="onSeeking()">
     <audio v-if="!videoMode" crossorigin="anonymous" ref="audioElement">
       <source v-if="source" :src="source" />
     </audio>
@@ -17,6 +17,8 @@ import Lyric from 'lrc-file-parser'
 import { mapState, mapGetters, mapMutations } from 'vuex'
 import NotifyMixin from '../mixins/Notification.js'
 
+
+
 export default {
   name: 'AudioElement',
 
@@ -27,14 +29,20 @@ export default {
       lrcObj: null,
       lrcAvailable: false,
       count: 0,
-      videoMode: JSON.parse(localStorage.getItem('videoModeFlag'))
+      // videoMode: JSON.parse(localStorage.getItem('videoModeFlag')),
+      videoMode: JSON.parse(localStorage.getItem('videoModeFlag')),
+      notifyBarButtonInited: false,
     }
   },
-
+  props: ["coverUrl"],
   computed: {
     player() {
       return this.$refs.plyr.player
     },
+    noPicFlag() {
+      return this.$q.localStorage.getItem('noPicFlag') || false
+    },
+
 
     // videoMode() {
     // const videoModeFlag = localStorage.getItem('videoModeFlag')
@@ -82,6 +90,14 @@ export default {
   },
 
   watch: {
+    noPicFlag() {
+      this.notifyBarButtonInited = false;
+      this.addNotifyBarButton()
+    },
+    currentPlayingFile() {
+      this.addNotifyBarButton()
+    }
+    ,
     playing(flag) {
       if (this.player.duration) {
         // 缓冲至可播放状态
@@ -90,6 +106,7 @@ export default {
           console.log('startTime', this.$store.state.AudioPlayer.startTime)
         }
       }
+
       // this.playLrc(flag);
     },
 
@@ -132,13 +149,14 @@ export default {
   },
 
   methods: {
-    onSourceChange(event) {
-      console.log('onPlay' + event)
+    onSourceChange() {
+      // console.log('onPlay' + event)
       // 销毁 vue-plyr 组件
       this.$refs.plyr.destroy();
       // 重新创建 vue-plyr 组件
       this.$nextTick(() => {
-        this.$refs.plyr.init();
+        this.$refs.plyr.init()
+        // this.addNotifyBarButton()
       });
       this.player.currentTime = this.$store.state.AudioPlayer.startTime;
     },
@@ -146,7 +164,7 @@ export default {
      * 当 外部暂停（线控暂停、软件切换）、用户控制暂停、seek 时会触发本事件
      */
     onPause() {
-      // console.log('onPause')
+      // console.log('onPause:this.playing'+this.playing)
       this.playLrc(false)
       this.PAUSE()
     },
@@ -158,6 +176,7 @@ export default {
       // this.player.seek(this.$store.state.AudioPlayer.currentTime);
       this.playLrc(true)
       this.PLAY()
+      // this.addNotifyBarButton(this.mediaConfigObj)
       if (this.$store.state.AudioPlayer.startTime != 0) {
         this.player.currentTime = this.$store.state.AudioPlayer.startTime;
         this.$store.commit('AudioPlayer/SET_START_TIME', 0);
@@ -185,15 +204,17 @@ export default {
       'SET_VOLUME',
       'CLEAR_SLEEP_MODE',
       'SET_REWIND_SEEK_MODE',
-      'SET_FORWARD_SEEK_MODE'
+      'SET_FORWARD_SEEK_MODE',
+      'ON_SEEKING',
+      'ON_SEEKED',
     ]),
 
     onCanplay() {
       // 缓冲至可播放状态时触发 (只有缓冲至可播放状态, 才能获取媒体文件的播放时长)
       this.SET_DURATION(this.player.duration)
 
-      // console.log('Playing:', this.videoMode);
-
+      // console.log('onCanplay');
+      // this.PLAY()
       // 播放
       if (this.playing && this.player.currentTime !== this.player.duration) {
         this.player.play()
@@ -275,8 +296,11 @@ export default {
       //   }
       // }
       // console.log("onseeked:" + this.playing)
+      this.ON_SEEKED()
     },
-
+    onSeeking() {
+      this.ON_SEEKING()
+    },
 
     playLrc(playStatus) {
       if (this.lrcAvailable) {
@@ -332,6 +356,65 @@ export default {
           }
         })
     },
+    //从用户UA获取用户设备类型
+    getMobileOperatingSystem() {
+      const userAgent = navigator.userAgent
+      // iOS设备
+      if (/iPad|iPhone|iPod|Macintosh/.test(userAgent) && !window.MSStream) {
+        return 'iOS';
+      }
+
+      // Android设备
+      if (/android/i.test(userAgent)) {
+        return 'Android';
+      }
+
+      // 其他情况
+      return 'unknown';
+    },
+    // 手机通知栏添加线控按钮
+    addNotifyBarButton() {
+      if ('mediaSession' in navigator) {
+        let platform = this.getMobileOperatingSystem()
+
+        const _this = this
+        let mediaConfigObj = {
+          title: this.noPicFlag ? "Kikoeru" : this.currentPlayingFile.title, //音轨标题
+          // title: this.currentPlayingFile.title,
+          artist: "",
+          album: this.noPicFlag ? "" : this.currentPlayingFile.workTitle, //作品标题
+          // album: this.currentPlayingFile.workTitle,
+          //artwork:[{ src: this.samCoverUrl(this.currentPlayingFile.hash), sizes: '50x50', type: 'image/jpg' }]
+          artwork: this.noPicFlag ? [{ src: "" }] : [{ src: this.coverUrl }]
+        }
+        navigator.mediaSession.metadata = new MediaMetadata(mediaConfigObj);
+        if (this.notifyBarButtonInited && (platform !== 'iOS')) { //被傻逼ios气晕， 如果为iOS则绑定第二次。
+          alert(platform !== 'iOS')
+          return
+        }
+        navigator.mediaSession.setActionHandler('play', function () {
+          _this.PLAY()
+        });
+        navigator.mediaSession.setActionHandler('pause', function () {
+          _this.PAUSE()
+        });
+
+        navigator.mediaSession.setActionHandler('previoustrack', function () {
+          _this.PREVIOUS_TRACK()
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { _this.NEXT_TRACK() });
+        // if (platform !== 'iOS') {
+        //   navigator.mediaSession.setActionHandler('seekbackward', function () {
+        //     _this.SET_REWIND_SEEK_MODE(true)
+        //   });
+        //   navigator.mediaSession.setActionHandler('seekforward', function () {
+        //     _this.SET_FORWARD_SEEK_MODE(true)
+        //   });
+        // }
+
+        this.notifyBarButtonInited = true; //确保setHandler只会执行一次
+      }
+    }
   },
 
   mounted() {
@@ -341,8 +424,7 @@ export default {
     if (this.source) {
       this.loadLrcFile();
     }
-
-    
+    this.addNotifyBarButton()
   }
 }
 </script>
