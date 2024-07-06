@@ -252,7 +252,24 @@ export default {
       this.detailMode = (localStorage.detailMode === 'true');
     }
   },
-
+  beforeRouteLeave (to, from, next) {
+    // ... 
+      let platform = this.$q.platform.is.platform
+      if (platform !== 'android' || this.$store.state.AudioPlayer.hide) {
+        console.log("hidden or not android");
+        next()
+      } else { //既是安卓 又没隐藏播放器，阻止跳转行为。 但即使没开始播放，hide也有可能为false，也会被阻止，实际上不应该被阻止。所以要加if。
+        console.log(this.$store.state.AudioPlayer);
+        if (this.$store.getters['AudioPlayer/currentPlayingFile'].hash) {   //开始播放了再阻止
+          console.log("playing blocked");
+          this.$store.commit("AudioPlayer/TOGGLE_HIDE")
+          next(false)
+        } else {
+          console.log("not playing");
+          next() //没开始播放或者隐藏了就放行
+        }
+      }
+  },
   computed: {
     url () {
       const query = this.$route.query

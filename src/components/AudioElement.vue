@@ -356,27 +356,10 @@ export default {
           }
         })
     },
-    //从用户UA获取用户设备类型
-    getMobileOperatingSystem() {
-      const userAgent = navigator.userAgent
-      // iOS设备
-      if (/iPad|iPhone|iPod|Macintosh/.test(userAgent) && !window.MSStream) {
-        return 'iOS';
-      }
-
-      // Android设备
-      if (/android/i.test(userAgent)) {
-        return 'Android';
-      }
-
-      // 其他情况
-      return 'unknown';
-    },
     // 手机通知栏添加线控按钮
     addNotifyBarButton() {
       if ('mediaSession' in navigator) {
-        let platform = this.getMobileOperatingSystem()
-
+        let platform = this.$q.platform.is.platform
         const _this = this
         let mediaConfigObj = {
           title: this.noPicFlag ? "Kikoeru" : this.currentPlayingFile.title, //音轨标题
@@ -402,7 +385,7 @@ export default {
           _this.PREVIOUS_TRACK()
         });
         navigator.mediaSession.setActionHandler('nexttrack', function () { _this.NEXT_TRACK() });
-        if (platform !== 'iOS') { //被傻逼ios气晕，只有3个按键，那就取消快进快退吧
+        if (platform !== 'ipad' && platform !== 'ios') { //被傻逼ios气晕，只有3个按键，那就取消快进快退吧
           navigator.mediaSession.setActionHandler('seekbackward', function () {
             _this.SET_REWIND_SEEK_MODE(true)
           });
