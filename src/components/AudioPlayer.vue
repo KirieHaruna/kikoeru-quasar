@@ -383,11 +383,11 @@ export default {
     },
 
     openWorkDetail() {
-      if (this.workDetailUrl && this.$route.path !== this.workDetailUrl) {
-        this.$router.push(this.workDetailUrl)
-      }
       if (this.$q.screen.lt.sm) {
         this.toggleHide()
+      }
+      if (this.workDetailUrl && this.$route.path !== this.workDetailUrl) {
+        this.$router.push(this.workDetailUrl)
       }
     }
   }
