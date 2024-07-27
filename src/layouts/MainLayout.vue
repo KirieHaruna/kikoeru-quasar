@@ -12,7 +12,8 @@
           </router-link>
         </q-toolbar-title>
 
-        <q-input dark dense rounded standout v-model="keyword" input-class="text-right" class="q-mr-sm">
+        <q-input dark dense rounded standout debounce="1000" v-model="keyword" input-class="text-right" class="q-mr-sm"
+        @keyup.enter="search()">
           <template v-slot:append>
             <q-icon v-if="keyword === ''" name="search" />
             <q-icon v-else name="clear" class="cursor-pointer" @click="keyword = ''" />
@@ -196,7 +197,6 @@ import LyricsBar from 'components/LyricsBar'
 import SleepMode from 'components/SleepMode'
 import NotifyMixin from '../mixins/Notification.js'
 import { mapMutations, mapState } from 'vuex'
-import { throttle } from 'quasar'
 
 export default {
   name: 'MainLayout',
@@ -256,7 +256,9 @@ export default {
 
   watch: {
     keyword () {
+      if (!this.$q.screen.lt.sm){ //手机端关闭自动提交搜索
         this.search()
+      }
     },
 
     randId () {
@@ -275,7 +277,6 @@ export default {
     if (localStorage.getItem('videoModeFlag') === null){
       localStorage.setItem('videoModeFlag', JSON.stringify(false))
     }
-    this.search = throttle(this.search,1000)
   },
 
   computed: {

@@ -64,7 +64,7 @@ export default {
 
   beforeRouteLeave (to, from, next) {
     // ... 
-      if (this.$q.screen.lt.sm || this.$store.state.AudioPlayer.hide) {
+      if (!this.$q.screen.lt.sm || this.$store.state.AudioPlayer.hide) {
         console.log("hidden or not mobile device");
         next()
       } else { //既是安卓 又没隐藏播放器，阻止跳转行为。 但即使没开始播放，hide也有可能为false，也会被阻止，实际上不应该被阻止。所以要加if。
