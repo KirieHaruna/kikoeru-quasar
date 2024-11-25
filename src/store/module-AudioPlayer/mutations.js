@@ -1,15 +1,24 @@
 const mutations = {
-  TOGGLE_HIDE (state) {
+  TOGGLE_HIDE(state) {
     state.hide = !state.hide
   },
 
-  PLAY (state) {
+  PLAY(state) {
+    if (state.seeking) {
+      return
+    }
     state.playing = true
   },
-  PAUSE (state) {
+  PAUSE(state) {
+    if (state.seeking) {
+      return
+    }
     state.playing = false
   },
-  TOGGLE_PLAYING (state) {
+  TOGGLE_PLAYING(state) {
+    if (state.seeking) {
+      return
+    }
     state.playing = !state.playing
   },
 
@@ -36,23 +45,23 @@ const mutations = {
       state.queueIndex -= 1
     }
   },
-  SET_START_TIME (state, time) {
+  SET_START_TIME(state, time) {
     state.startTime = time
   },
-  
-  SET_QUEUE (state, payload) {
+
+  SET_QUEUE(state, payload) {
     state.queue = payload.queue
     state.queueIndex = payload.index
     if (payload.time) {
       state.startTime = payload.time
-    }else{
+    } else {
       state.startTime = 0
     }
     // console.log(state.startTime)
 
     if (payload.resetPlaying) {
       state.playing = true
-    }    
+    }
   },
   EMPTY_QUEUE: (state) => {
     state.playing = false
@@ -70,15 +79,15 @@ const mutations = {
       state.queueIndex = 0
     } else if (index < state.queueIndex) {
       state.queueIndex -= 1
-    } 
+    }
   },
 
 
-  SET_DURATION (state, second) {
+  SET_DURATION(state, second) {
     state.duration = second
   },
 
-  SET_CURRENT_TIME (state, second) {
+  SET_CURRENT_TIME(state, second) {
     state.currentTime = second
   },
 
@@ -144,6 +153,12 @@ const mutations = {
   CLEAR_SLEEP_MODE: (state) => {
     state.sleepTime = null
     state.sleepMode = false
+  },
+  ON_SEEKING(state) {
+    state.seeking = true;
+  },
+  ON_SEEKED(state) {
+    state.seeking = false;
   }
 }
 

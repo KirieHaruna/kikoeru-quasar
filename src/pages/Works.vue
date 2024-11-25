@@ -21,10 +21,10 @@
           />
         </div>
         <div class="row q-col-gutter-x-md q-col-gutter-y-sm justify-center" style="max-width: 2560px;"> 
-          <div v-for="(work, index) in history.slice(0, 6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+          <div v-for="(work) in history.slice(0, 6)" :key="work.id" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
             <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
           </div>
-          <div v-for="(work, index) in history.slice(6)" :key="index" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6" v-show="showAll">
+          <div v-for="(work) in history.slice(6)" :key="work.id" class="col-xs-6 col-sm-6 col-md-6 col-lg-6 col-xl-6" v-show="showAll">
             <WorkListItem :metadata="work" :showLabel="false" :isHistoryItem="true" />
           </div>
         </div>
@@ -252,7 +252,23 @@ export default {
       this.detailMode = (localStorage.detailMode === 'true');
     }
   },
-
+  beforeRouteLeave (to, from, next) {
+    // ... 
+      if (!this.$q.screen.lt.sm || this.$store.state.AudioPlayer.hide) {
+        console.log("hidden or not android");
+        next()
+      } else { //既是安卓 又没隐藏播放器，阻止跳转行为。 但即使没开始播放，hide也有可能为false，也会被阻止，实际上不应该被阻止。所以要加if。
+        console.log(this.$store.state.AudioPlayer);
+        if (this.$store.getters['AudioPlayer/currentPlayingFile'].hash) {   //开始播放了再阻止
+          console.log("playing blocked");
+          this.$store.commit("AudioPlayer/TOGGLE_HIDE")
+          next(false)
+        } else {
+          console.log("not playing");
+          next() //没开始播放或者隐藏了就放行
+        }
+      }
+  },
   computed: {
     url () {
       const query = this.$route.query

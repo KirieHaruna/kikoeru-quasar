@@ -1,17 +1,8 @@
 <template>
-  <vue-plyr
-    ref="plyr"
-    :emit="['canplay', 'timeupdate', 'ended', 'seeked', 'playing', 'waiting', 'pause']"
-    @canplay="onCanplay()"
-    @timeupdate="onTimeupdate()"
-    @ended="onEnded()"
-    @seeked="onSeeked()"
-    @playing="onPlaying()"
-    @waiting="onWaiting()"
-    @pause="onPause()"
-    @sourcechange="onSourceChange()"
-  >
-    <audio v-if="!videoMode" crossorigin="anonymous">
+  <vue-plyr ref="plyr" :emit="['canplay', 'timeupdate', 'ended', 'seeked', 'playing', 'waiting', 'pause', 'seeking']"
+    @canplay="onCanplay()" @timeupdate="onTimeupdate()" @ended="onEnded()" @seeked="onSeeked()" @playing="onPlaying()"
+    @waiting="onWaiting()" @pause="onPause()" @sourcechange="onSourceChange()" @seeking="onSeeking()">
+    <audio v-if="!videoMode" crossorigin="anonymous" ref="audioElement">
       <source v-if="source" :src="source" />
     </audio>
     <video v-else crossorigin="anonymous">
@@ -26,6 +17,8 @@ import Lyric from 'lrc-file-parser'
 import { mapState, mapGetters, mapMutations } from 'vuex'
 import NotifyMixin from '../mixins/Notification.js'
 
+
+
 export default {
   name: 'AudioElement',
 
@@ -36,14 +29,20 @@ export default {
       lrcObj: null,
       lrcAvailable: false,
       count: 0,
-      videoMode: JSON.parse(localStorage.getItem('videoModeFlag'))
+      // videoMode: JSON.parse(localStorage.getItem('videoModeFlag')),
+      videoMode: JSON.parse(localStorage.getItem('videoModeFlag')),
+      notifyBarButtonInited: false,
     }
   },
-
+  props: ["coverUrl"],
   computed: {
-    player () {
+    player() {
       return this.$refs.plyr.player
     },
+    noPicFlag() {
+      return this.$q.localStorage.getItem('noPicFlag') || false
+    },
+
 
     // videoMode() {
     // const videoModeFlag = localStorage.getItem('videoModeFlag')
@@ -55,9 +54,9 @@ export default {
     //   }
     // },
 
-    source () {
+    source() {
       // 从 LocalStorage 中读取 token
-      console.log(this.currentPlayingFile)
+      // console.log(this.currentPlayingFile)
       const token = this.$q.localStorage.getItem('jwt-token') || ''
       // New API
       if (this.currentPlayingFile.mediaStreamUrl) {
@@ -91,19 +90,28 @@ export default {
   },
 
   watch: {
-    playing (flag) {
+    noPicFlag() {
+      this.notifyBarButtonInited = false;
+      this.addNotifyBarButton()
+    },
+    currentPlayingFile() {
+      this.addNotifyBarButton()
+    }
+    ,
+    playing(flag) {
       if (this.player.duration) {
         // 缓冲至可播放状态
         flag ? this.player.play() : this.player.pause()
-        if(this.$store.state.AudioPlayer.startTime != 0) {
+        if (this.$store.state.AudioPlayer.startTime != 0) {
           console.log('startTime', this.$store.state.AudioPlayer.startTime)
         }
       }
+
       // this.playLrc(flag);
     },
 
     // watch source -> media.load() -> canPlay -> player.play()
-    source (url) {
+    source(url) {
       if (url) {
         // 加载新音频/视频文件
         this.player.media.load();
@@ -111,12 +119,12 @@ export default {
       }
     },
 
-    muted (flag) {
+    muted(flag) {
       // 切换静音状态
       this.player.muted = flag
     },
 
-    volume (val) {
+    volume(val) {
       // 屏蔽非法数值
       if (val < 0 || val > 1) {
         return
@@ -141,13 +149,14 @@ export default {
   },
 
   methods: {
-    onSourceChange(event){
-      console.log('onPlay' + event)
+    onSourceChange() {
+      // console.log('onPlay' + event)
       // 销毁 vue-plyr 组件
       this.$refs.plyr.destroy();
       // 重新创建 vue-plyr 组件
       this.$nextTick(() => {
-        this.$refs.plyr.init();
+        this.$refs.plyr.init()
+        // this.addNotifyBarButton()
       });
       this.player.currentTime = this.$store.state.AudioPlayer.startTime;
     },
@@ -155,7 +164,7 @@ export default {
      * 当 外部暂停（线控暂停、软件切换）、用户控制暂停、seek 时会触发本事件
      */
     onPause() {
-      // console.log('onPause')
+      // console.log('onPause:this.playing'+this.playing)
       this.playLrc(false)
       this.PAUSE()
     },
@@ -167,7 +176,8 @@ export default {
       // this.player.seek(this.$store.state.AudioPlayer.currentTime);
       this.playLrc(true)
       this.PLAY()
-      if(this.$store.state.AudioPlayer.startTime != 0) {
+      // this.addNotifyBarButton(this.mediaConfigObj)
+      if (this.$store.state.AudioPlayer.startTime != 0) {
         this.player.currentTime = this.$store.state.AudioPlayer.startTime;
         this.$store.commit('AudioPlayer/SET_START_TIME', 0);
       }
@@ -189,26 +199,29 @@ export default {
       'PLAY',
       'SET_TRACK',
       'NEXT_TRACK',
+      'PREVIOUS_TRACK',
       'SET_CURRENT_LYRIC',
       'SET_VOLUME',
       'CLEAR_SLEEP_MODE',
       'SET_REWIND_SEEK_MODE',
-      'SET_FORWARD_SEEK_MODE'
+      'SET_FORWARD_SEEK_MODE',
+      'ON_SEEKING',
+      'ON_SEEKED',
     ]),
 
-    onCanplay () {
+    onCanplay() {
       // 缓冲至可播放状态时触发 (只有缓冲至可播放状态, 才能获取媒体文件的播放时长)
       this.SET_DURATION(this.player.duration)
 
-      console.log('Playing:', this.videoMode);
-
+      // console.log('onCanplay');
+      // this.PLAY()
       // 播放
       if (this.playing && this.player.currentTime !== this.player.duration) {
         this.player.play()
       }
     },
 
-    onTimeupdate () {
+    onTimeupdate() {
       // 当目前的播放位置已更改时触发
       this.SET_CURRENT_TIME(this.player.currentTime)
       this.count += 1
@@ -239,7 +252,7 @@ export default {
       }
     },
 
-    onEnded () {
+    onEnded() {
       // 当前文件播放结束时触发
       switch (this.playMode.name) {
         case "all repeat":
@@ -258,7 +271,7 @@ export default {
           break
         case "shuffle": {
           // 随机播放
-          const index = Math.floor(Math.random()*this.queue.length)
+          const index = Math.floor(Math.random() * this.queue.length)
           this.SET_TRACK(index)
           if (index === this.queueIndex) {
             this.player.currentTime = 0
@@ -282,10 +295,14 @@ export default {
       //     this.lrcObj.pause();
       //   }
       // }
+      // console.log("onseeked:" + this.playing)
+      this.ON_SEEKED()
+    },
+    onSeeking() {
+      this.ON_SEEKING()
     },
 
-
-    playLrc (playStatus) {
+    playLrc(playStatus) {
       if (this.lrcAvailable) {
         if (playStatus) {
           this.lrcObj.play(this.player.currentTime * 1000);
@@ -295,15 +312,15 @@ export default {
       }
     },
 
-    initLrcObj () {
-        this.lrcObj = new Lyric({
-          onPlay: (line, text) => {
-            this.SET_CURRENT_LYRIC(text);
-          },
-        })
+    initLrcObj() {
+      this.lrcObj = new Lyric({
+        onPlay: (line, text) => {
+          this.SET_CURRENT_LYRIC(text);
+        },
+      })
     },
 
-    loadLrcFile () {
+    loadLrcFile() {
       const token = this.$q.localStorage.getItem('jwt-token') || '';
       const fileHash = this.queue[this.queueIndex].hash;
       const url = `/api/media/check-lrc/${fileHash}?token=${token}`;
@@ -339,15 +356,57 @@ export default {
           }
         })
     },
+    // 手机通知栏添加线控按钮
+    addNotifyBarButton() {
+      if ('mediaSession' in navigator) {
+        let platform = this.$q.platform.is.platform
+        const _this = this
+        let mediaConfigObj = {
+          title: this.noPicFlag ? "Kikoeru" : this.currentPlayingFile.title, //音轨标题
+          // title: this.currentPlayingFile.title,
+          artist: "",
+          album: this.noPicFlag ? "" : this.currentPlayingFile.workTitle, //作品标题
+          // album: this.currentPlayingFile.workTitle,
+          //artwork:[{ src: this.samCoverUrl(this.currentPlayingFile.hash), sizes: '50x50', type: 'image/jpg' }]
+          artwork: this.noPicFlag ? [{ src: "" }] : [{ src: this.coverUrl }]
+        }
+        navigator.mediaSession.metadata = new MediaMetadata(mediaConfigObj);
+        // if (this.notifyBarButtonInited && (platform !== 'iOS')) { //ios则绑定第二次
+        //   return
+        // }
+        navigator.mediaSession.setActionHandler('play', function () {
+          _this.PLAY()
+        });
+        navigator.mediaSession.setActionHandler('pause', function () {
+          _this.PAUSE()
+        });
+
+        navigator.mediaSession.setActionHandler('previoustrack', function () {
+          _this.PREVIOUS_TRACK()
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', function () { _this.NEXT_TRACK() });
+        if (platform !== 'ipad' && platform !== 'ios') { //被傻逼ios气晕，只有3个按键，那就取消快进快退吧
+          navigator.mediaSession.setActionHandler('seekbackward', function () {
+            _this.SET_REWIND_SEEK_MODE(true)
+          });
+          navigator.mediaSession.setActionHandler('seekforward', function () {
+            _this.SET_FORWARD_SEEK_MODE(true)
+          });
+        }
+
+        this.notifyBarButtonInited = true; //确保setHandler只会执行一次
+      }
+    }
   },
 
-  mounted () {
+  mounted() {
     // 初始化音量
     this.SET_VOLUME(this.player.volume);
     this.initLrcObj();
     if (this.source) {
       this.loadLrcFile();
     }
+    this.addNotifyBarButton()
   }
 }
 </script>

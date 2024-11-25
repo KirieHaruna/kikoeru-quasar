@@ -12,7 +12,8 @@
           </router-link>
         </q-toolbar-title>
 
-        <q-input dark dense rounded standout v-model="keyword" debounce="500" input-class="text-right" class="q-mr-sm">
+        <q-input dark dense rounded standout debounce="1000" v-model="keyword" input-class="text-right" class="q-mr-sm"
+        @keyup.enter="search()">
           <template v-slot:append>
             <q-icon v-if="keyword === ''" name="search" />
             <q-icon v-else name="clear" class="cursor-pointer" @click="keyword = ''" />
@@ -255,7 +256,9 @@ export default {
 
   watch: {
     keyword () {
-      this.$router.push(this.keyword ? `/works?keyword=${this.keyword}` : `/works`)
+      if (!this.$q.screen.lt.sm){ //手机端关闭自动提交搜索
+        this.search()
+      }
     },
 
     randId () {
@@ -289,6 +292,9 @@ export default {
   },
 
   methods: {
+    search(){
+      this.$router.push(this.keyword ? `/works?keyword=${this.keyword}` : `/works`)
+    },
     ...mapMutations('AudioPlayer', [
       'SET_REWIND_SEEK_TIME',
       'SET_FORWARD_SEEK_TIME'
